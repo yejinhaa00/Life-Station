@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>인생정거장 | 360° 파노라마 테스트</title>
+<style>
+:root {color-scheme: dark; font-family: Pretendard, 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#050505}
+#pano{display:block;width:100vw;height:100dvh;touch-action:none;cursor:grab;outline:none}
+#pano.dragging{cursor:grabbing}
+.topbar{position:fixed;top:0;left:0;width:100%;padding:27px 38px;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;z-index:2;pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,.4),transparent)}
+.brand{font-size:20px;font-weight:800;letter-spacing:-.075em;line-height:1.25}
+.kicker{margin-top:5px;font-size:11px;font-weight:450;letter-spacing:.11em;color:#ffffffb8}
+.tag{font-size:11px;letter-spacing:.15em;color:#fff9;border:1px solid #ffffff55;border-radius:40px;padding:8px 12px}
+.bottom{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:12px;z-index:2;width:min(94vw,510px);pointer-events:none}
+.guide{padding:10px 18px;border:1px solid #ffffff30;border-radius:40px;background:rgba(0,0,0,.43);backdrop-filter:blur(16px);color:#fff;font-size:12px;letter-spacing:.005em;white-space:nowrap}
+.controls{display:flex;align-items:center;gap:7px;pointer-events:auto}
+.controls button{color:#fff;background:rgba(0,0,0,.5);border:1px solid #ffffff40;backdrop-filter:blur(16px);border-radius:50%;width:40px;height:40px;display:grid;place-items:center;cursor:pointer;transition:background .2s,border-color .2s}
+.controls button:hover,.controls button:focus-visible{background:#ffffff36;border-color:#fff;outline:none}
+.controls button:active{transform:scale(.96)}
+.controls button.wide{border-radius:30px;width:auto;min-width:78px;padding:0 14px;font-size:12px;font-weight:500}
+.controls svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#notice{display:none;position:fixed;inset:0;z-index:5;background:#080808;color:#f2f2f2;place-items:center;text-align:center;padding:30px;line-height:1.7}
+#notice.show{display:grid}
+@media(max-width:600px){.topbar{padding:19px 20px}.brand{font-size:18px}.tag{font-size:9px;padding:7px 10px}.bottom{bottom:18px}.guide{font-size:11px;padding:10px 14px}}
+@media(prefers-reduced-motion:reduce){.controls button{transition:none}}
+</style>
+<style>.topbar{background:none!important;color:#242424;top:0;padding:30px 40px}.topbar .brand{font-size:30px;letter-spacing:-.05em;line-height:1.3}.topbar .kicker{color:#444;font-size:14px;letter-spacing:0;margin:0 0 14px}.tag{color:#444;border-color:#777} .bottom .guide{white-space:normal;text-align:center}</style><style>
+/* 360° 정거장 전환: 기존 드래그/확대/축소는 그대로 사용 */
+.station-switch{position:fixed;top:50%;z-index:4;transform:translateY(-50%);width:56px;height:74px;display:grid;place-items:center;border:0;background:rgba(255,255,255,.74);color:#292929;cursor:pointer;transition:background .2s ease,opacity .2s ease;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.station-switch:hover,.station-switch:focus-visible{background:#fff;outline:1px solid rgba(0,0,0,.22)}
+.station-switch svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.station-switch.prev{left:15px;border-radius:100px}
+.station-switch.next{right:15px;border-radius:100px}
+.station-switch:disabled{opacity:.25;cursor:default;background:rgba(255,255,255,.35)}
+.station-step{position:fixed;right:40px;top:100px;font-size:14px;font-weight:500;letter-spacing:.1em;color:#323232;z-index:3;text-shadow:0 1px 6px rgba(255,255,255,.7);pointer-events:none}
+@media(max-width:600px){.station-switch{width:36px;height:56px}.station-switch svg{width:24px;height:24px}.station-switch.prev{left:5px}.station-switch.next{right:5px}.station-step{right:20px;top:98px;font-size:12px}}
+</style></head>
+<body>
+<canvas aria-label="마우스나 손가락을 드래그하면 360도 파노라마를 둘러볼 수 있습니다" id="pano" tabindex="0"></canvas>
+<header class="topbar">
+<div><div class="kicker">Station</div><div class="brand" id="station-current-title">졸업</div></div>
+<div class="tag">INTERACTIVE VIEW</div>
+</header>
+<button type="button" class="station-switch prev" id="station-prev" aria-label="이전 스테이션" title="이전 스테이션"><svg viewBox="0 0 24 24"><path d="M15 4L7 12l8 8"/></svg></button>
+<button type="button" class="station-switch next" id="station-next" aria-label="다음 스테이션" title="다음 스테이션"><svg viewBox="0 0 24 24"><path d="M9 4l8 8-8 8"/></svg></button>
+<div class="station-step" id="station-position" aria-live="polite">01 / 06</div>
+
+<div class="bottom">
+<div class="guide">마우스로 드래그해서 둘러보세요 · 휠로 확대 / 축소</div>
+<div aria-label="파노라마 조작" class="controls">
+<button aria-label="축소" id="zoomOut" title="축소"><svg viewbox="0 0 24 24"><path d="M5 12h14"></path></svg></button>
+<button class="wide" id="reset" title="시점 초기화">초기화</button>
+<button aria-label="확대" id="zoomIn" title="확대"><svg viewbox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></button>
+<button aria-label="전체 화면" id="fullscreen" title="전체 화면"><svg viewbox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"></path></svg></button>
+</div>
+</div>
+<div id="notice">파노라마를 표시할 수 없습니다. WebGL을 지원하는 최신 브라우저에서 HTML 파일을 열어주세요.</div>
+<script>
+(()=>{'use strict';
+const STATIONS=[
+{name:'졸업',src:null},
+{name:'취업',src:null},
+{name:'독립',src:null},
+{name:'여행',src:null},
+{name:'방황',src:null},
+{name:'도약',src:null}
+];
+
+
+// Preserve original uploaded PNG data byte-for-byte. Scripts are used rather than
+// file:// image URLs to avoid tainted WebGL textures in locally opened HTML.
+const panoramaPromises=new Map();
+function getOriginalPanorama(index){
+ if(window.originalLifePanoramas?.[index]) return Promise.resolve(window.originalLifePanoramas[index]);
+ if(panoramaPromises.has(index)) return panoramaPromises.get(index);
+ const number=String(index+1).padStart(2,'0');
+ const promise=new Promise((resolve,reject)=>{
+  const script=document.createElement('script');
+  script.src='./pano-'+number+'.js';
+  script.onload=()=>{
+   const data=window.originalLifePanoramas?.[index];
+   if(data)resolve(data);else reject(new Error('파노라마 PNG 데이터가 없습니다.'));
+   script.remove();
+  };
+  script.onerror=()=>reject(new Error('파노라마 이미지 파일을 불러올 수 없습니다.'));
+  document.head.appendChild(script);
+ });
+ panoramaPromises.set(index,promise);
+ return promise;
+}
+function reportPanoramaError(error){
+ console.error('Panorama load error',error);
+ document.getElementById('notice').textContent='파노라마 이미지 로딩 실패: ZIP 파일을 압축 해제하고 panorama 폴더의 pano-01.js ~ pano-06.js를 함께 보관해 주세요.';
+ document.getElementById('notice').classList.add('show');
+}
+
+const INITIAL_YAW=[.28,-1.42,.28,.28,-1.42,-1.42];
+let CURRENT_STATION=0;
+function setupStationNavigation(changeStation){
+ const prev=document.getElementById('station-prev');
+ const next=document.getElementById('station-next');
+ const title=document.getElementById('station-current-title');
+ const counter=document.getElementById('station-position');
+ let current=0;
+ function show(i){
+  if(i<0||i>=STATIONS.length)return;
+  current=i;CURRENT_STATION=i;
+  title.textContent=STATIONS[i].name;
+  counter.textContent=String(i+1).padStart(2,'0')+' / '+String(STATIONS.length).padStart(2,'0');
+  prev.disabled=i===0;next.disabled=i===STATIONS.length-1;
+  changeStation(i);
+ }
+ prev.addEventListener('click',()=>show(current-1));
+ next.addEventListener('click',()=>show(current+1));
+ show(0);
+}
+const canvas=document.getElementById('pano');
+const gl=canvas.getContext('webgl',{alpha:false,antialias:false,preserveDrawingBuffer:false,powerPreference:'high-performance'});
+if(!gl){initFallback();return;}
+function initFallback(){
+ const ctx=canvas.getContext('2d',{alpha:false});
+ if(!ctx){document.getElementById('notice').classList.add('show');return;}
+ let yaw=0.28,pitch=0,fov=90,dragging=false,lastX=0,lastY=0,ready=false,srcData,srcW,srcH,schedule=false;
+ const src=new Image();
+ const c=document.createElement('canvas');const cctx=c.getContext('2d',{willReadFrequently:true});
+ const staging=document.createElement('canvas');const sctx=staging.getContext('2d');
+ const clamp=(v,a,b)=>Math.max(a,Math.min(v,b));
+ src.onload=()=>{srcW=src.naturalWidth;srcH=src.naturalHeight;c.width=srcW;c.height=srcH;cctx.drawImage(src,0,0);srcData=cctx.getImageData(0,0,srcW,srcH).data;ready=true;requestRender();};
+ src.onerror=()=>document.getElementById('notice').classList.add('show');
+ 
+ function render(){schedule=false;if(!ready)return;
+  const dpr=Math.min(window.devicePixelRatio||1,3);
+  canvas.width=Math.max(1,Math.round(canvas.clientWidth*dpr));canvas.height=Math.max(1,Math.round(canvas.clientHeight*dpr));
+  const w=Math.min(2048,Math.max(1,Math.round(canvas.clientWidth*Math.min(window.devicePixelRatio||1,2))));
+  const h=Math.max(1,Math.round(w*canvas.clientHeight/canvas.clientWidth));
+  if(staging.width!==w||staging.height!==h){staging.width=w;staging.height=h;}
+  const out=sctx.createImageData(w,h),a=out.data;
+  const cp=Math.cos(pitch),sp=Math.sin(pitch),cy=Math.cos(yaw),sy=Math.sin(yaw),halfTan=Math.tan(fov*Math.PI/360),ratio=w/h;
+  for(let py=0;py<h;py++){
+   const ry=(1-(py+.5)*2/h)*halfTan;
+   for(let px=0;px<w;px++){
+    const rx=((px+.5)*2/w-1)*ratio*halfTan;
+    const inv=1/Math.hypot(rx,ry,1);
+    const x=rx*inv,y=ry*inv,z=-inv;
+    const y2=cp*y-sp*z,z2=sp*y+cp*z;
+    const x3=cy*x-sy*z2,z3=sy*x+cy*z2;
+    let u=0.5+Math.atan2(x3,-z3)/(2*Math.PI);u-=Math.floor(u);
+    const v=0.5-Math.asin(Math.max(-1,Math.min(1,y2)))/Math.PI;
+    const tx=Math.min(srcW-1,(u*srcW)|0),ty=Math.min(srcH-1,Math.max(0,(v*srcH)|0));
+    const si=(ty*srcW+tx)*4,di=(py*w+px)*4;
+    a[di]=srcData[si];a[di+1]=srcData[si+1];a[di+2]=srcData[si+2];a[di+3]=255;
+   }
+  }
+  sctx.putImageData(out,0,0);
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(staging,0,0,canvas.width,canvas.height);
+ }
+ function requestRender(){if(!schedule){schedule=true;requestAnimationFrame(render);}}
+ canvas.addEventListener('pointerdown',e=>{if(e.button!==0&&e.pointerType==='mouse')return;dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.classList.add('dragging');canvas.setPointerCapture(e.pointerId);});
+ canvas.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;const k=.0038*(fov/90);yaw-=dx*k;pitch=clamp(pitch+dy*k,-1.48,1.48);requestRender();});
+ function stop(){dragging=false;canvas.classList.remove('dragging');}
+ canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);canvas.addEventListener('lostpointercapture',stop);
+ canvas.addEventListener('wheel',e=>{e.preventDefault();fov=clamp(fov+Math.sign(e.deltaY)*3,32,105);requestRender();},{passive:false});
+ const zoom=d=>{fov=clamp(fov+d,32,105);requestRender();};
+ document.getElementById('zoomIn').addEventListener('click',()=>zoom(-8));
+ document.getElementById('zoomOut').addEventListener('click',()=>zoom(8));
+ document.getElementById('reset').addEventListener('click',()=>{yaw=INITIAL_YAW[CURRENT_STATION];pitch=0;fov=90;requestRender();});
+ document.getElementById('fullscreen').addEventListener('click',()=>{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen?.();});
+ window.addEventListener('resize',requestRender);
+ window.addEventListener('keydown',e=>{if(e.target.tagName==='BUTTON')return;switch(e.key){case 'ArrowLeft':yaw-=.13;break;case 'ArrowRight':yaw+=.13;break;case 'ArrowUp':pitch=clamp(pitch+.13,-1.48,1.48);break;case 'ArrowDown':pitch=clamp(pitch-.13,-1.48,1.48);break;case '+':case '=':zoom(-6);return;case '-':zoom(6);return;default:return;}e.preventDefault();requestRender();});
+setupStationNavigation(i=>{ready=false;yaw=INITIAL_YAW[i];pitch=0;fov=90;getOriginalPanorama(i).then(url=>{if(CURRENT_STATION===i){document.getElementById('notice').classList.remove('show');src.src=url;}}).catch(reportPanoramaError);});
+
+}
+
+const VS=`attribute vec2 pos;void main(){gl_Position=vec4(pos,0.0,1.0);}`;
+const FS=`precision highp float;
+uniform sampler2D pano;
+uniform vec2 resolution;
+uniform float yaw;
+uniform float pitch;
+uniform float fov;
+const float PI=3.14159265358979323846;
+void main(){
+ vec2 xy=(gl_FragCoord.xy/resolution)*2.0-1.0;
+ float aspect=resolution.x/resolution.y;
+ float t=tan(radians(fov)*0.5);
+ vec3 d=normalize(vec3(xy.x*aspect*t,xy.y*t,-1.0));
+ float cp=cos(pitch),sp=sin(pitch);
+ d=vec3(d.x,cp*d.y-sp*d.z,sp*d.y+cp*d.z);
+ float cy=cos(yaw),sy=sin(yaw);
+ d=vec3(cy*d.x-sy*d.z,d.y,sy*d.x+cy*d.z);
+ float u=0.5+atan(d.x,-d.z)/(2.0*PI);
+ float v=0.5-asin(clamp(d.y,-1.0,1.0))/PI;
+ gl_FragColor=vec4(texture2D(pano,vec2(u,v)).rgb,1.0);
+}`;
+function shader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s;}
+let program;
+try{program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,VS));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,FS));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));}
+catch(e){console.error(e);document.getElementById('notice').classList.add('show');return;}
+gl.useProgram(program);
+const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+const loc=gl.getAttribLocation(program,'pos');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+const uniforms={resolution:gl.getUniformLocation(program,'resolution'),yaw:gl.getUniformLocation(program,'yaw'),pitch:gl.getUniformLocation(program,'pitch'),fov:gl.getUniformLocation(program,'fov')};
+const texture=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);
+// Texture configuration is selected per image below so non-power-of-two
+// panoramas (e.g. the original 2000 x 1000 wandering PNG) render in WebGL 1.
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+gl.uniform1i(gl.getUniformLocation(program,'pano'),0);
+let ready=false;
+const source=new Image();
+source.onload=()=>{
+ gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+ gl.bindTexture(gl.TEXTURE_2D,texture);
+ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,source);
+ const isPowerOfTwo=n=>(n>0&&(n&(n-1))===0);
+ const canMipmap=isPowerOfTwo(source.naturalWidth)&&isPowerOfTwo(source.naturalHeight);
+ // WebGL 1 requires CLAMP_TO_EDGE and no mipmaps for NPOT textures.
+ // PNG pixel data is uploaded unchanged: no resampling or lossy re-encoding.
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,canMipmap?gl.REPEAT:gl.CLAMP_TO_EDGE);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,canMipmap?gl.LINEAR_MIPMAP_LINEAR:gl.LINEAR);
+ if(canMipmap)gl.generateMipmap(gl.TEXTURE_2D);
+ ready=true;render();
+};
+source.onerror=()=>document.getElementById('notice').classList.add('show');
+
+let yaw=0.28,pitch=0,fov=90;
+let lastX=0,lastY=0,dragging=false;
+const clamp=(v,a,b)=>Math.max(a,Math.min(v,b));
+let scheduled=false;
+function render(){scheduled=false;if(!ready)return;
+ const dpr=Math.min(window.devicePixelRatio||1,2);
+ const w=Math.max(1,Math.round(canvas.clientWidth*dpr)),h=Math.max(1,Math.round(canvas.clientHeight*dpr));
+ if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h);}
+ gl.uniform2f(uniforms.resolution,canvas.width,canvas.height);
+ gl.uniform1f(uniforms.yaw,yaw);gl.uniform1f(uniforms.pitch,pitch);gl.uniform1f(uniforms.fov,fov);
+ gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+}
+function requestRender(){if(!scheduled){scheduled=true;requestAnimationFrame(render);}}
+canvas.addEventListener('pointerdown',e=>{if(e.button!==0&&e.pointerType==='mouse')return;dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.classList.add('dragging');canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;const k=0.0038*(fov/90);yaw-=dx*k;pitch=clamp(pitch+dy*k,-1.48,1.48);requestRender();});
+function stopDrag(){dragging=false;canvas.classList.remove('dragging');}
+canvas.addEventListener('pointerup',stopDrag);canvas.addEventListener('pointercancel',stopDrag);canvas.addEventListener('lostpointercapture',stopDrag);
+canvas.addEventListener('wheel',e=>{e.preventDefault();fov=clamp(fov+Math.sign(e.deltaY)*3,32,105);requestRender();},{passive:false});
+function zoom(d){fov=clamp(fov+d,32,105);requestRender();}
+document.getElementById('zoomIn').addEventListener('click',()=>zoom(-8));
+document.getElementById('zoomOut').addEventListener('click',()=>zoom(8));
+document.getElementById('reset').addEventListener('click',()=>{yaw=INITIAL_YAW[CURRENT_STATION];pitch=0;fov=90;requestRender();});
+document.getElementById('fullscreen').addEventListener('click',()=>{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen?.();});
+window.addEventListener('resize',requestRender);
+window.addEventListener('keydown',e=>{if(e.target.tagName==='BUTTON')return;switch(e.key){case 'ArrowLeft':yaw-=.13;break;case 'ArrowRight':yaw+=.13;break;case 'ArrowUp':pitch=clamp(pitch+.13,-1.48,1.48);break;case 'ArrowDown':pitch=clamp(pitch-.13,-1.48,1.48);break;case '+':case '=':zoom(-6);return;case '-':zoom(6);return;default:return;}e.preventDefault();requestRender();});
+setupStationNavigation(i=>{ready=false;yaw=INITIAL_YAW[i];pitch=0;fov=90;getOriginalPanorama(i).then(url=>{if(CURRENT_STATION===i){document.getElementById('notice').classList.remove('show');source.src=url;}}).catch(reportPanoramaError);});
+
+})();
+</script>
+</body>
+</html>
