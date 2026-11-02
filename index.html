@@ -2267,8 +2267,8 @@ const stationData=[
  ['취업 | 익숙함','반복되는 하루를 살아가는 순간. 처음의 기대는 어느새 <br> 익숙함이 되고, 그 반복도 삶의 한 과정이 됩니다.'],
  ['독립 | 안정','낯선 곳에서 나의 자리를 찾는 순간. 남의 공간 <br> 같던 곳이 조금씩 나의 공간이 되어 갑니다.'],
  ['여행 | 설렘','익숙함을 벗어나 새로운 가능성을 마주하는 순간. <br> 앞에 무엇이 있을지 모른다는 것 자체가 설렘이 됩니다.'],
- ['방황/도약 | 용기','방향을 찾지 못 해 헤매던 순간을 지나, 다시 앞으로 나아가는 순간. 완벽한 답이 아니어도 스스로 고른 방향으로 한 걸음 내딛습니다.'],
- ['삶 | 연결','지나온 순간들이 모여 하나의 삶이 되는 순간. <br> 서로 다른 경험이 쌓여 지금의 나를 만듭니다.']
+ ['방황 | 고민','어디로 가야 할지 몰라 잠시 길을 잃는 순간. <br> 멈추고 돌아가는 시간도 나만의 방향을 찾아가는 과정입니다.'],
+ ['도약 | 용기','망설임을 뒤로하고 다시 앞으로 나아가는 순간. <br> 완벽한 준비가 아니어도 스스로 내딛는 한 걸음이 새로운 시작이 됩니다.']
 ];
 const tabs=[...document.querySelectorAll('.station-tab')];
 function selectStation(index){tabs.forEach((t,i)=>{t.classList.toggle('active',i===index);t.setAttribute('aria-pressed',String(i===index));});document.querySelector('#station-n').textContent=String(index+1).padStart(2,'0');document.querySelector('#station-name').textContent=stationData[index][0];document.querySelector('#station-desc'). innerHTML=stationData[index][1];}
