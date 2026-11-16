@@ -1971,6 +1971,102 @@ body section:not(#message) h2#objects-title {
 
 </style>
 
+<style id="life-station-scroll-hero">
+/* 메인 전용 스타일. 기존 #about 이후는 적용되지 않음. */
+#home.ls-scroll-stage {
+  position:relative;
+  height:245vh;
+  width:100%;
+  margin:0;
+  padding:0;
+  max-width:none;
+  scroll-margin-top:0;
+}
+#home .ls-hero-screen {
+  position:sticky;
+  top:var(--header-h,94px);
+  width:100%;
+  height:calc(100svh - var(--header-h,94px));
+  min-height:490px;
+  overflow:hidden;
+  isolation:isolate;
+  background:#fff;
+}
+#home .ls-hero-copy {
+  position:absolute;
+  z-index:10;
+  left:50%;top:44.5%;
+  width:min(92%,780px);
+  transform:translate(-50%,-50%);
+  text-align:center;
+  pointer-events:none;
+  will-change:transform;
+}
+#home .ls-hero-copy p {
+  font-size:clamp(13px,1.12vw,17px);
+  color:#7f7f7f;
+  font-weight:500;
+  margin:0 0 22px;
+  letter-spacing:-.035em;
+}
+#home .ls-hero-copy h1 {margin:0;line-height:0}
+#home .ls-hero-copy h1 img {
+  display:block;
+  width:min(39vw,575px);
+  min-width:350px;
+  max-width:100%;
+  height:auto;
+  margin:0 auto;
+}
+#home .ls-object {
+  position:absolute;
+  z-index:3;
+  pointer-events:none;
+  user-select:none;
+  will-change:transform;
+  transform-origin:center center;
+}
+#home .ls-object img {
+  display:block;
+  width:100%;
+  height:auto;
+  max-width:none;
+  object-fit:contain;
+  image-rendering:auto;
+  backface-visibility:hidden;
+}
+/* 승인한 기존 시안의 첫 화면 위치·크기·투명도 그대로 */
+#home #ls-plane {width:27.5vw;left:.5%;top:-8%;opacity:.48}
+#home #ls-cap {width:24.3vw;left:14.8%;top:34%;opacity:.55;z-index:9}
+#home #ls-badge {width:15vw;left:72.5%;top:-45%;opacity:.61}
+#home #ls-box {width:24vw;left:4.4%;top:78%;opacity:.60}
+#home #ls-shoe {width:12.6vw;left:54.7%;top:77%;opacity:.60}
+#home #ls-hurdle {width:26vw;left:79.7%;top:59%;opacity:.59}
+#home #ls-badge img {transform:rotate(18deg)}
+@media(max-width:900px) {
+  #home #ls-plane {width:35vw}
+  #home #ls-cap {width:32vw;left:7%;top:34%}
+  #home #ls-badge {width:20vw;left:78%;top:-27%}
+  #home #ls-box {width:33vw;left:-1%}
+  #home #ls-shoe {width:23vw;left:51%}
+  #home #ls-hurdle {width:31vw;left:83%}
+  #home .ls-hero-copy h1 img {width:min(51vw,560px)}
+}
+@media(max-width:620px) {
+  #home .ls-hero-copy {top:45%;width:100%}
+  #home .ls-hero-copy p {font-size:12px;margin-bottom:15px}
+  #home .ls-hero-copy h1 img {width:77vw;min-width:0}
+  #home #ls-plane {width:57vw;left:-11%;top:1%}
+  #home #ls-cap {width:49vw;left:-10%;top:32%}
+  #home #ls-badge {width:35vw;left:79%;top:-14%}
+  #home #ls-box {width:55vw;left:-16%;top:77%}
+  #home #ls-shoe {width:36vw;left:47%;top:80%}
+  #home #ls-hurdle {width:49vw;left:85%;top:51%}
+}
+@media(prefers-reduced-motion:reduce){
+  #home .ls-object,#home .ls-hero-copy{will-change:auto}
+}
+</style>
 </head>
 <body>
 <header class="header" id="top">
@@ -1984,15 +2080,19 @@ body section:not(#message) h2#objects-title {
 </div>
 </header>
 <main>
-<section aria-label="표지" class="hero wrap cover-v20-reference" id="home">
-<div aria-hidden="true" class="hero-floating-stage">
-<div class="hero-floating-object float-cap" data-depth="0.65"><img alt="" draggable="false" src="assets/asset-02-53fb21.webp"/></div>
-<div class="hero-floating-object float-id" data-depth="0.85"><img alt="" draggable="false" src="assets/asset-03-09861d.webp"/></div>
-<div class="hero-floating-object float-plane" data-depth="1.05"><img alt="" draggable="false" src="assets/asset-04-a47ebf.webp"/></div>
-<div class="hero-floating-object float-box" data-depth="0.6"><img alt="" draggable="false" src="assets/asset-05-fce3dc.webp"/></div>
-<div class="hero-floating-object float-hurdle" data-depth="0.9"><img alt="" draggable="false" src="assets/asset-06-0f1c77.webp"/></div>
-</div>
-<div class="hero-copy"><p>서로 다른 삶이 모여 만드는 하나의 풍경</p><img alt="인생정거장" draggable="false" src="assets/asset-01-420105.png"/></div>
+<section aria-label="표지" id="home" class="ls-scroll-stage">
+  <div class="ls-hero-screen">
+    <div class="ls-hero-copy" id="lsHeroCopy">
+      <p>서로 다른 삶이 모여 만드는 하나의 풍경</p>
+      <h1><img alt="인생정거장" src="assets/asset-01-420105.png" draggable="false"></h1>
+    </div>
+    <div class="ls-object" id="ls-plane"><img src="assets/ls-plane.png" alt="" draggable="false"></div>
+    <div class="ls-object" id="ls-cap"><img src="assets/ls-cap.png" alt="" draggable="false"></div>
+    <div class="ls-object" id="ls-badge"><img src="assets/ls-badge.png" alt="" draggable="false"></div>
+    <div class="ls-object" id="ls-box"><img src="assets/ls-box.png" alt="" draggable="false"></div>
+    <div class="ls-object" id="ls-shoe"><img src="assets/ls-shoe.png" alt="" draggable="false"></div>
+    <div class="ls-object" id="ls-hurdle"><img src="assets/ls-hurdle.png" alt="" draggable="false"></div>
+  </div>
 </section>
 <section aria-label="작품 소개" class="overview wrap" id="about">
 <div class="overview-left">
@@ -3220,6 +3320,88 @@ select(0);
   new IntersectionObserver(entries=>{
     document.body.classList.toggle('credits-footer-visible',entries.some(e=>e.isIntersecting));
   },{threshold:.03}).observe(footer);
+})();
+</script>
+<script id="life-station-scroll-motion">
+(()=>{
+  'use strict';
+  const stage=document.querySelector('#home.ls-scroll-stage');
+  const logo=document.getElementById('lsHeroCopy');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)');
+  if(!stage||!logo)return;
+  const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
+  const ease=t=>{t=clamp(t);return t*t*(3-2*t)};
+  // More decisive scroll paths. Starting locations, image sizes, transparency and the logo are CSS-owned.
+  const routes=[
+    {id:'plane',pts:[[0,0],[27,10],[50,0],[54,16],[30,11]],turns:[0,7,-6,5,-4],ax:66,ay:54,period:17,phase:.50},
+    {id:'cap',pts:[[0,0],[12,3],[-8,-9],[3,17],[28,2]],turns:[0,-9,10,-7,6],ax:59,ay:53,period:20,phase:1.83},
+    {id:'badge',pts:[[0,0],[-4,16],[-40,11],[-48,6],[-8,4]],turns:[0,8,-9,7,-4],ax:61,ay:55,period:19,phase:3.03},
+    {id:'box',pts:[[0,0],[10,-12],[28,-11],[47,-22],[44,-9]],turns:[0,-7,8,-6,5],ax:61,ay:46,period:22,phase:4.10},
+    {id:'shoe',pts:[[0,0],[-8,-7],[-42,-8],[-25,-12],[-35,-3]],turns:[0,9,-11,9,-5],ax:65,ay:48,period:17,phase:5.05},
+    {id:'hurdle',pts:[[0,0],[-9,-32],[-15,-16],[0,-18],[-2,0]],turns:[0,-8,8,-6,4],ax:56,ay:49,period:21,phase:6.14}
+  ].map(o=>({...o,el:document.getElementById('ls-'+o.id)}));
+  if(routes.some(o=>!o.el))return;
+  const endZones={plane:[56,-15,-3],cap:[4,11,-3],badge:[82,-48,7],box:[64,72,0],shoe:[40,77,-4],hurdle:[2,60,4]};
+  // A continuous curve with noticeable changes of direction, without hard stops or frame jitter.
+  function spline(points,p,axis){
+    const pos=clamp(p)*(points.length-1);
+    const i=Math.min(points.length-2,Math.floor(pos));
+    const u=pos-i,u2=u*u,u3=u2*u;
+    const a=points[Math.max(i-1,0)][axis],b=points[i][axis];
+    const c=points[i+1][axis],d=points[Math.min(i+2,points.length-1)][axis];
+    return .5*(2*b+(-a+c)*u+(2*a-5*b+4*c-d)*u2+(-a+3*b-3*c+d)*u3);
+  }
+  routes.forEach(o=>o.turns=o.turns.map(v=>[v]));
+  let goal=0,progress=0,start=0,last=0,visible=true,frame=0;
+  function measure(){
+    const rect=stage.getBoundingClientRect();
+    goal=clamp(-rect.top/Math.max(1,stage.offsetHeight-innerHeight));
+    const hh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h'))||94;
+    visible=rect.bottom>hh&&rect.top<innerHeight;
+  }
+  function animate(now){
+    frame=0;
+    if(!visible||document.hidden)return;
+    if(!start){start=now;last=now;}
+    const dt=Math.min(.05,(now-last)/1000);last=now;
+    // Less lag between the wheel and the objects; a responsive, kinetic rhythm.
+    progress+=(goal-progress)*(1-Math.exp(-12.2*dt));
+    if(Math.abs(goal-progress)<.00001)progress=goal;
+    // Gentle alternating acceleration / deceleration, not random shaking.
+    const q=clamp(progress+.018*Math.sin(progress*6*Math.PI)*Math.sin(progress*Math.PI));
+    const spread=ease(clamp((progress-.62)/.34));
+    const clearance=ease(clamp((progress-.10)/.20))*(1-ease(clamp((progress-.61)/.25)));
+    const seconds=(now-start)/1000;
+    const mobile=innerWidth<780?.48:innerWidth<1080?.77:1;
+    const W=innerWidth/100,H=innerHeight/100;
+    for(const o of routes){
+      if(reduce.matches){o.el.style.transform='none';continue;}
+      const theta=2*Math.PI*seconds/o.period,p=o.phase;
+      const driftX=(Math.sin(theta+p)-Math.sin(p))*o.ax*mobile;
+      const driftY=(Math.cos(.84*theta+p)-Math.cos(p))*o.ay*mobile;
+      const driftRot=(Math.sin(.73*theta+p)-Math.sin(p))*2.7;
+      const pathX=spline(o.pts,q,0)*W*mobile;
+      const pathY=spline(o.pts,q,1)*H*(.75+.25*mobile);
+      const pathRot=spline(o.turns,q,0);
+      const end=endZones[o.id];
+      const endX=end[0]*W-o.el.offsetLeft;
+      const endY=end[1]*o.el.offsetParent.clientHeight/100-o.el.offsetTop;
+      const dodge={plane:[0,-11],cap:[-8,0],badge:[0,-14],hurdle:[6,0]}[o.id]||[0,0];
+      const x=pathX+(endX-pathX)*spread+dodge[0]*W*mobile*clearance;
+      const y=pathY+(endY-pathY)*spread+dodge[1]*H*clearance;
+      const rot=pathRot+(end[2]-pathRot)*spread;
+      const idleLevel=1-.65*spread;
+      o.el.style.transform=`translate3d(${(x+driftX*idleLevel).toFixed(2)}px,${(y+driftY*idleLevel).toFixed(2)}px,0) rotate(${(rot+driftRot*idleLevel).toFixed(2)}deg)`;
+    }
+    logo.style.transform='translate(-50%,-50%)';
+    frame=requestAnimationFrame(animate);
+  }
+  function update(){measure();if(visible&&!frame){last=performance.now();frame=requestAnimationFrame(animate);}}
+  addEventListener('scroll',update,{passive:true});
+  addEventListener('resize',update,{passive:true});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)update();});
+  reduce.addEventListener?.('change',update);
+  update();
 })();
 </script>
 </body></html>
