@@ -2067,9 +2067,11 @@ body section:not(#message) h2#objects-title {
   #home .ls-object,#home .ls-hero-copy{will-change:auto}
 }
 /* 메인과 Overview 사이에 넉넉한 실제 여백 확보. 다른 섹션 레이아웃은 변경하지 않음. */
-#home.ls-scroll-stage { margin-bottom: clamp(380px, 44vh, 520px); }
+#home.ls-scroll-stage {
+  margin-bottom: clamp(180px, 22vh, 260px);
+}
 @media(max-width:820px) {
-  #home.ls-scroll-stage { margin-bottom: clamp(190px, 28vh, 280px); }
+  #home.ls-scroll-stage { margin-bottom: clamp(100px, 28vh, 160px); }
 }
 /* 스크롤 마지막에만 오브젝트 잘리는 경계를 하얀 그라디언트로 완화.
    메인 전체/로고의 opacity는 변경하지 않음. */
