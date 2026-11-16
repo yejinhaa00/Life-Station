@@ -2101,7 +2101,6 @@ body section:not(#message) h2#objects-title {
 .journey-section .journey-screen-label span:first-child {opacity:.6;}
 .journey-section .journey-screen-label span:last-child {font-size:15px;font-weight:650;}
 .journey-headline {display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:17px;letter-spacing:.08em;font-size:12px;font-weight:650;color:#222;}
-.journey-headline #journey-progress {letter-spacing:0;color:#7f7f7f;font-weight:500;}
 .journey-section .journey-choices {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:13px;}
 .journey-section .journey-choices button {position:relative;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;min-width:0;min-height:152px;padding:17px 18px 18px;border:1px solid #d3d3d3;background:#fff;cursor:pointer;text-align:left;color:#333;font-family:inherit;font-weight:400;line-height:1.1;transition:background .18s,border-color .18s,color .18s,transform .18s;}
 .journey-section .journey-choices button:hover:not(:disabled) {transform:translateY(-3px);border-color:#222;background:#f7f7f7;color:#111;}
@@ -2122,6 +2121,20 @@ body section:not(#message) h2#objects-title {
 .journey-status {max-width:590px;color:#888;font-size:13px;line-height:1.7;}
 @media(max-width:940px) { .journey-section .journey-screen {width:100%;margin:55px auto 47px;} .journey-section .journey-choices {grid-template-columns:repeat(3,minmax(0,1fr));} .journey-section .journey-choices button {min-height:137px;} }
 @media(max-width:580px) { .journey-section {padding-top:100px;padding-bottom:100px;} .journey-section .journey-choices {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;} .journey-section .journey-choices button {min-height:127px;padding:14px;} .journey-section .journey-name {font-size:22px;} .journey-section .journey-screen {margin:37px auto 40px;} .journey-section .journey-screen-label {left:13px;top:10px;font-size:10px;gap:8px;} .journey-section .journey-screen-label span:last-child {font-size:12px;} .journey-action-row {margin-top:28px;gap:18px;} .journey-play-all {width:100%;} }
+
+/* 2026-11-16: selected route and playback action share the top row */
+.journey-section .journey-headline {align-items:center;gap:24px;margin-bottom:20px;letter-spacing:normal;}
+.journey-section .journey-headline #journey-selected {flex:1;min-width:0;font-size:14px;font-weight:550;line-height:1.55;color:#222;letter-spacing:-.015em;overflow-wrap:break-word;}
+.journey-section .journey-headline .journey-play-all {flex:0 0 auto;min-width:225px;min-height:50px;gap:24px;padding:13px 19px;font-size:13px;letter-spacing:0;}
+.journey-section .journey-selection-bar {margin-top:24px;}
+.journey-section .journey-selection-bar .journey-status {margin:0;}
+@media(max-width:650px) {
+  .journey-section .journey-headline {align-items:stretch;flex-direction:column;gap:14px;}
+  .journey-section .journey-headline .journey-play-all {width:100%;min-width:0;min-height:46px;}
+  .journey-section .journey-headline #journey-selected {font-size:13px;}
+  .journey-section .journey-selection-bar {align-items:flex-start;gap:14px;}
+  .journey-section .journey-selection-bar .journey-status {flex:1 1 200px;}
+}
 </style>
 
 </head>
@@ -2390,7 +2403,7 @@ body section:not(#message) h2#objects-title {
     <video id="journey-video" playsinline controls preload="metadata" aria-label="선택한 정거장의 영상" src="assets/%EC%A1%B8%EC%97%85(2).mp4"></video>
     <div class="journey-screen-label" aria-hidden="true"><span id="journey-video-idx">01 / 06</span><span id="journey-caption">졸업</span></div>
   </div>
-  <div class="journey-headline"><span>MY JOURNEY</span><span id="journey-progress">0 / 4 선택</span></div>
+  <div class="journey-headline"><span id="journey-selected" aria-label="선택한 나의 여정" aria-live="polite">졸업 → · → · → · → · → 삶</span><button class="journey-play-all" id="journey-play" type="button" disabled>나의 여정 재생 <span aria-hidden="true">↗</span></button></div>
   <div class="journey-choices" id="journey-choices" aria-label="영상 재생 순서를 선택하는 정거장">
     <button class="journey-fixed" type="button" disabled aria-label="첫 번째 정거장: 졸업, 순서 고정"><span class="journey-number">01</span><span class="journey-name">졸업</span><span class="journey-meta">START · 고정</span></button>
     <button type="button" data-journey-name="취업" aria-pressed="false"><span class="journey-number" data-journey-order>+</span><span class="journey-name">취업</span><span class="journey-meta">순서 선택</span></button>
@@ -2399,8 +2412,7 @@ body section:not(#message) h2#objects-title {
     <button type="button" data-journey-name="방황" aria-pressed="false"><span class="journey-number" data-journey-order>+</span><span class="journey-name">방황</span><span class="journey-meta">순서 선택</span></button>
     <button class="journey-fixed journey-final" type="button" disabled aria-label="마지막 정거장: 삶, 순서 고정"><span class="journey-number">06</span><span class="journey-name">삶</span><span class="journey-meta">END · 고정</span></button>
   </div>
-  <div class="journey-selection-bar"><span id="journey-selected" aria-live="polite">졸업 → · → · → · → · → 삶</span><button id="journey-reset" type="button">선택 초기화</button></div>
-  <div class="journey-action-row"><button class="journey-play-all" id="journey-play" type="button" disabled>나의 여정 재생 <span aria-hidden="true">↗</span></button><p class="journey-status" id="journey-status" role="status" aria-live="polite">중간 정거장 네 개를 순서대로 선택하면 전체 영상을 재생할 수 있습니다.</p></div>
+  <div class="journey-selection-bar"><p class="journey-status" id="journey-status" role="status" aria-live="polite">중간 정거장 네 개를 순서대로 선택하면 전체 영상을 재생할 수 있습니다.</p><button id="journey-reset" type="button">선택 초기화</button></div>
 </section>
 
 <section class="video-section wrap" id="video"><div class="eyebrow">Video</div><h2 class="h2">인생정거장</h2><a class="video-youtube-link"
@@ -3500,7 +3512,6 @@ select(0);
   const choices = Array.from(document.querySelectorAll('#journey-choices [data-journey-name]'));
   const video = document.getElementById('journey-video');
   const selectedText = document.getElementById('journey-selected');
-  const progress = document.getElementById('journey-progress');
   const caption = document.getElementById('journey-caption');
   const videoIndex = document.getElementById('journey-video-idx');
   const playButton = document.getElementById('journey-play');
@@ -3543,7 +3554,6 @@ select(0);
     });
     const slots = [start, ...route, ...Array(maxChoice - route.length).fill('·'), finish];
     selectedText.textContent = slots.join(' → ');
-    progress.textContent = route.length + ' / ' + maxChoice + ' 선택';
     playButton.disabled = route.length !== maxChoice;
   }
   function stopSequence() {
