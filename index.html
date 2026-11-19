@@ -2368,6 +2368,59 @@ html:not(.has-scroll-motion) #station-outro .outro-plane {opacity:.58;}
   #message .center-message,#message .word-node,#message .message-line,#message .message-ambient-line{transition:none!important;}
 }
 </style>
+
+<style id="message-title-flicker-fix-chrome-20261120">
+/* Chrome desktop: keep the important statement in a steady, untransformed
+   text layer. Opacity+transform transitions on the old centered layer caused
+   its text to disappear intermittently while the SVG was being repainted. */
+#message .center-message,
+#message.appear .center-message,
+#message.stage-quiet .center-message {
+  position:absolute!important;
+  inset:0 0 auto 0!important;
+  left:0!important;
+  right:0!important;
+  top:0!important;
+  bottom:auto!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:95%!important;
+  margin:0!important;
+  padding:0 3.5%!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:center!important;
+  text-align:center!important;
+  transform:none!important;
+  -webkit-transform:none!important;
+  opacity:1!important;
+  visibility:visible!important;
+  transition:none!important;
+  animation:none!important;
+  will-change:auto!important;
+  filter:none!important;
+  z-index:20!important;
+  pointer-events:none!important;
+}
+#message .center-message::before {display:none!important;}
+#message .center-message .center-pre,
+#message .center-message h2,
+#message .center-message p {
+  opacity:1!important;
+  visibility:visible!important;
+  transform:none!important;
+  transition:none!important;
+  animation:none!important;
+  will-change:auto!important;
+  filter:none!important;
+}
+/* Keep orbit dragging/clicking unchanged, but avoid animated competing layers. */
+#message .message-center-dot {animation:none!important;}
+#message .message-center-glow {display:none!important;}
+#message .message-orbit-ring,
+#message .message-ambient-line.bright {animation:none!important;}
+</style>
 </head>
 <body>
 <header class="header" id="top">
