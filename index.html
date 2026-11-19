@@ -2396,6 +2396,18 @@ html:not(.has-scroll-motion) #station-outro .outro-plane {opacity:.58;}
 /* Keep moving station labels, connected paths, orbiting lights, hover and
    click selection fully intact, exactly as in the supplied original file. */
 </style>
+
+<style id="message-mobile-center-spacing-fix-20261120">
+/* Only on small screens: the original mobile `margin:auto` on the h2 becomes
+   auto TOP and BOTTOM margins after the flicker fix turned the parent into a
+   flex column. It spreads the label to the top and the description to the
+   bottom. Reset ONLY that margin; the desktop layout and orbit JS are intact. */
+@media (max-width:540px) {
+  #message .center-message h2 {
+    margin:0 auto!important;
+  }
+}
+</style>
 </head>
 <body>
 <header class="header" id="top">
