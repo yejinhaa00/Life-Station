@@ -2342,55 +2342,24 @@ html:not(.has-scroll-motion) #station-outro .outro-plane {opacity:.58;}
 }
 </style>
 
-<style id="message-stability-fix-20261120">
-/* Message: steady appearance on Safari/iMac and mobile without per-frame glow flashes. */
-#message .message-center-glow {display:none!important;}
-#message .message-ambient-line.bright,
-#message .message-orbit-ring {animation:none!important;}
-/* Solid, consistently drawn SVG rays: changing dash lengths causes Safari repaint shimmer. */
-#message .message-line, #message .message-ambient-line {
-  stroke-dasharray:none!important;stroke-dashoffset:0!important;
-  transition:opacity .55s ease!important;
-}
-#message .message-ambient-line {opacity:0!important;}
-#message.appear .message-ambient-line {opacity:.12!important;}
-#message.appear.has-selection .message-ambient-line {opacity:.07!important;}
-#message .message-line {opacity:0!important;}
-#message.appear .message-line {opacity:.60!important;}
-#message.appear.has-selection .message-line:not(.selected-path) {opacity:.10!important;}
-#message.appear .message-line.selected-path {opacity:1!important;}
-/* Selection remains visible, but no constant pulsing/moving luminous dots. */
-#message .message-travel-dot {display:none!important;}
-#message .center-message {transition:opacity .6s ease!important;}
-#message .word-node {transition:opacity .55s ease,color .2s ease!important;}
-#message .message-orbit-ring {stroke-dasharray:2 16;opacity:.16;}
-@media (prefers-reduced-motion:reduce){
-  #message .center-message,#message .word-node,#message .message-line,#message .message-ambient-line{transition:none!important;}
-}
-</style>
-
-<style id="message-title-flicker-fix-chrome-20261120">
-/* Chrome desktop: keep the important statement in a steady, untransformed
-   text layer. Opacity+transform transitions on the old centered layer caused
-   its text to disappear intermittently while the SVG was being repainted. */
+<style id="message-flicker-only-original-motion-20261120">
+/* Only address flashing. The ORIGINAL orbit, drag, inertia, and traveling
+   point JavaScript below remains untouched, so all six stations keep moving. */
 #message .center-message,
-#message.appear .center-message,
-#message.stage-quiet .center-message {
+#message.appear .center-message {
+  /* Text stays on a stable layout layer rather than a repeatedly recomposited
+     translate(-50%,-50%) layer sharing a surface with animated SVG lines. */
   position:absolute!important;
   inset:0 0 auto 0!important;
-  left:0!important;
-  right:0!important;
-  top:0!important;
-  bottom:auto!important;
   width:100%!important;
-  max-width:100%!important;
   height:95%!important;
-  margin:0!important;
+  max-width:100%!important;
   padding:0 3.5%!important;
+  margin:0!important;
   display:flex!important;
   flex-direction:column!important;
-  justify-content:center!important;
   align-items:center!important;
+  justify-content:center!important;
   text-align:center!important;
   transform:none!important;
   -webkit-transform:none!important;
@@ -2398,28 +2367,34 @@ html:not(.has-scroll-motion) #station-outro .outro-plane {opacity:.58;}
   visibility:visible!important;
   transition:none!important;
   animation:none!important;
-  will-change:auto!important;
   filter:none!important;
-  z-index:20!important;
+  will-change:auto!important;
   pointer-events:none!important;
+  z-index:5!important;
 }
-#message .center-message::before {display:none!important;}
-#message .center-message .center-pre,
-#message .center-message h2,
-#message .center-message p {
+#message .center-message *,
+#message.appear .center-message * {
   opacity:1!important;
   visibility:visible!important;
-  transform:none!important;
-  transition:none!important;
   animation:none!important;
-  will-change:auto!important;
+  transition:none!important;
   filter:none!important;
 }
-/* Keep orbit dragging/clicking unchanged, but avoid animated competing layers. */
-#message .message-center-dot {animation:none!important;}
-#message .message-center-glow {display:none!important;}
-#message .message-orbit-ring,
-#message .message-ambient-line.bright {animation:none!important;}
+/* Remove only decorative brightness oscillation and SVG stroke-dash repaints.
+   Ray endpoints still follow their original moving station labels each frame. */
+#message .message-center-glow,
+#message.appear .message-center-glow { animation:none!important; }
+#message .message-ambient-line.bright,
+#message.appear .message-ambient-line.bright,
+#message .message-orbit-ring { animation:none!important; }
+#message .message-line,
+#message .message-ambient-line {
+  stroke-dasharray:none!important;
+  stroke-dashoffset:0!important;
+  transition:opacity .35s ease,stroke .2s ease,stroke-width .2s ease!important;
+}
+/* Keep moving station labels, connected paths, orbiting lights, hover and
+   click selection fully intact, exactly as in the supplied original file. */
 </style>
 </head>
 <body>
@@ -2907,7 +2882,7 @@ function renderNetwork(t){
     ring.setAttribute('ry',Math.max(1,Math.abs(verticalForeshortening)*h*(i===0?.205:.373)).toFixed(2));
   });
   // Modest center breathing and a drifting perspective; the words always stay upright.
-  const pivotX=cx,pivotY=cy; // Fixed vanishing point prevents micro-jitter on Safari.
+  const pivotX=cx+Math.sin(t*.00034)*w*.003,pivotY=cy+Math.cos(t*.00037)*h*.004;
   const dot=document.querySelector('#center-dot'),glow=document.querySelector('#center-glow');
   dot.setAttribute('cx',pivotX);dot.setAttribute('cy',pivotY);
   glow.setAttribute('cx',pivotX);glow.setAttribute('cy',pivotY);
@@ -2934,42 +2909,38 @@ function renderNetwork(t){
     node.style.setProperty('--over-y',((y-pivotY)*.14).toFixed(2)+'px');
     const ln=links[i];ln.setAttribute('x1',pivotX);ln.setAttribute('y1',pivotY);
     ln.setAttribute('x2',x);ln.setAttribute('y2',y);
-    // Park decorative markers. Do not animate SVG opacity/position every frame.
+    // Small light travels along each path, quietly suggesting that everyone moves at a different pace.
+    const progress=networkReducedMotion ? .50 : .5-.5*Math.cos((t*.00050+i*.19)*Math.PI*2);
     const dot=travelDots[i];
     if(dot){
-      dot.setAttribute('cx',pivotX+(x-pivotX)*.5);
-      dot.setAttribute('cy',pivotY+(y-pivotY)*.5);
+      dot.setAttribute('cx',pivotX+(x-pivotX)*progress);
+      dot.setAttribute('cy',pivotY+(y-pivotY)*progress);
     }
   }
 }
-// Only render during direct manipulation or brief drag inertia.
-// The scene rests between interactions, avoiding continuous Safari SVG repaints.
 function animateNetwork(t){
-  const delta=priorFrame?Math.min((t-priorFrame)/16.667,3):1;
-  priorFrame=t;
-  if(!isDragging && !networkReducedMotion){
-    orbitAngle+=orbitVelocity*delta;
-    orbitPitch+=pitchVelocity*delta;
-    orbitVelocity*=Math.pow(.88,delta);
-    pitchVelocity*=Math.pow(.86,delta);
-    if(Math.abs(orbitVelocity)<.00008)orbitVelocity=0;
-    if(Math.abs(pitchVelocity)<.00008)pitchVelocity=0;
+  // Keep the landing coordinates still during the launch. Updating CSS vars while
+  // keyframes run made the title/rays appear to "fizz" as they were being re-targeted.
+  const frozen = scrollingNow;
+  if(!frozen && (t-lastNetworkDraw >= 33 || isDragging)){
+    const delta=priorFrame?Math.min((t-priorFrame)/16.667,3):1;
+    priorFrame=t;lastNetworkDraw=t;
+    if(!isDragging && !networkReducedMotion){
+      orbitAngle+=(.00135+orbitVelocity)*delta;
+      orbitPitch+=pitchVelocity*delta;
+      orbitVelocity*=Math.pow(.935,delta);
+      pitchVelocity*=Math.pow(.91,delta);
+      if(Math.abs(orbitVelocity)<.00002)orbitVelocity=0;
+      if(Math.abs(pitchVelocity)<.00002)pitchVelocity=0;
+    }
+    renderNetwork(t);
+  } else if(frozen){
+    // No speed jump when the user stops scrolling or the entrance finishes.
+    priorFrame=t;
   }
-  if(!scrollingNow && (t-lastNetworkDraw>=32 || isDragging)){
-    renderNetwork(t);lastNetworkDraw=t;
-  }
-  if(messageVisible && !scrollingNow && (isDragging || Math.abs(orbitVelocity)>.00008 || Math.abs(pitchVelocity)>.00008)){
-    networkRaf=requestAnimationFrame(animateNetwork);
-  }else{
-    networkRaf=0;
-  }
+  networkRaf=messageVisible?requestAnimationFrame(animateNetwork):0;
 }
-function startNetwork(){
-  if(!networkRaf && messageVisible && !scrollingNow){
-    priorFrame=0;lastNetworkDraw=0;
-    networkRaf=requestAnimationFrame(animateNetwork);
-  }
-}
+function startNetwork(){if(!networkRaf){priorFrame=0;lastNetworkDraw=0;networkRaf=requestAnimationFrame(animateNetwork);}}
 function stopNetwork(){if(networkRaf){cancelAnimationFrame(networkRaf);networkRaf=0;}}
 networkLayout();
 let knownLayoutWidth=stage.clientWidth, knownLayoutHeight=stage.clientHeight;
@@ -2995,8 +2966,6 @@ window.addEventListener('scroll',()=>{
   scrollRestTimer=setTimeout(()=>{
     scrollingNow=false;
     priorFrame=0;
-    // Refresh once after scroll settles; do not resume a perpetual idle loop.
-    if(messageVisible)renderNetwork(performance.now());
   },180);
 },{passive:true});
 // Preserve page scrolling for touchscreens; on mouse/trackpad either axis
@@ -3018,9 +2987,8 @@ stage.addEventListener('pointermove',e=>{
   orbitVelocity=Math.max(-.07,Math.min(.07,turnX*.58));
   pitchVelocity=Math.max(-.07,Math.min(.07,turnY*.58));
   movedDistance+=Math.abs(dx)+Math.abs(dy);lastX=e.clientX;lastY=e.clientY;
-  // Redraw only while a visitor is actively manipulating the network.
-  if(messageVisible && !scrollingNow)startNetwork();
-  else renderNetwork(performance.now());
+  // The next animation frame renders this angle once, not twice.
+  if(!messageVisible)renderNetwork(performance.now());
 });
 function releaseOrbit(e){if(activePointer!==e.pointerId)return;isDragging=false;activePointer=-1;stage.classList.remove('dragging');
   try{if(stage.hasPointerCapture(e.pointerId))stage.releasePointerCapture(e.pointerId)}catch(_){}}
