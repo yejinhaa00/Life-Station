@@ -2341,6 +2341,33 @@ html:not(.has-scroll-motion) #station-outro .outro-plane {opacity:.58;}
   html.has-scroll-motion #station-outro .outro-signpost.ls-in-view {opacity:.32!important;}
 }
 </style>
+
+<style id="message-stability-fix-20261120">
+/* Message: steady appearance on Safari/iMac and mobile without per-frame glow flashes. */
+#message .message-center-glow {display:none!important;}
+#message .message-ambient-line.bright,
+#message .message-orbit-ring {animation:none!important;}
+/* Solid, consistently drawn SVG rays: changing dash lengths causes Safari repaint shimmer. */
+#message .message-line, #message .message-ambient-line {
+  stroke-dasharray:none!important;stroke-dashoffset:0!important;
+  transition:opacity .55s ease!important;
+}
+#message .message-ambient-line {opacity:0!important;}
+#message.appear .message-ambient-line {opacity:.12!important;}
+#message.appear.has-selection .message-ambient-line {opacity:.07!important;}
+#message .message-line {opacity:0!important;}
+#message.appear .message-line {opacity:.60!important;}
+#message.appear.has-selection .message-line:not(.selected-path) {opacity:.10!important;}
+#message.appear .message-line.selected-path {opacity:1!important;}
+/* Selection remains visible, but no constant pulsing/moving luminous dots. */
+#message .message-travel-dot {display:none!important;}
+#message .center-message {transition:opacity .6s ease!important;}
+#message .word-node {transition:opacity .55s ease,color .2s ease!important;}
+#message .message-orbit-ring {stroke-dasharray:2 16;opacity:.16;}
+@media (prefers-reduced-motion:reduce){
+  #message .center-message,#message .word-node,#message .message-line,#message .message-ambient-line{transition:none!important;}
+}
+</style>
 </head>
 <body>
 <header class="header" id="top">
@@ -2827,7 +2854,7 @@ function renderNetwork(t){
     ring.setAttribute('ry',Math.max(1,Math.abs(verticalForeshortening)*h*(i===0?.205:.373)).toFixed(2));
   });
   // Modest center breathing and a drifting perspective; the words always stay upright.
-  const pivotX=cx+Math.sin(t*.00034)*w*.003,pivotY=cy+Math.cos(t*.00037)*h*.004;
+  const pivotX=cx,pivotY=cy; // Fixed vanishing point prevents micro-jitter on Safari.
   const dot=document.querySelector('#center-dot'),glow=document.querySelector('#center-glow');
   dot.setAttribute('cx',pivotX);dot.setAttribute('cy',pivotY);
   glow.setAttribute('cx',pivotX);glow.setAttribute('cy',pivotY);
@@ -2854,38 +2881,42 @@ function renderNetwork(t){
     node.style.setProperty('--over-y',((y-pivotY)*.14).toFixed(2)+'px');
     const ln=links[i];ln.setAttribute('x1',pivotX);ln.setAttribute('y1',pivotY);
     ln.setAttribute('x2',x);ln.setAttribute('y2',y);
-    // Small light travels along each path, quietly suggesting that everyone moves at a different pace.
-    const progress=networkReducedMotion ? .50 : .5-.5*Math.cos((t*.00050+i*.19)*Math.PI*2);
+    // Park decorative markers. Do not animate SVG opacity/position every frame.
     const dot=travelDots[i];
     if(dot){
-      dot.setAttribute('cx',pivotX+(x-pivotX)*progress);
-      dot.setAttribute('cy',pivotY+(y-pivotY)*progress);
+      dot.setAttribute('cx',pivotX+(x-pivotX)*.5);
+      dot.setAttribute('cy',pivotY+(y-pivotY)*.5);
     }
   }
 }
+// Only render during direct manipulation or brief drag inertia.
+// The scene rests between interactions, avoiding continuous Safari SVG repaints.
 function animateNetwork(t){
-  // Keep the landing coordinates still during the launch. Updating CSS vars while
-  // keyframes run made the title/rays appear to "fizz" as they were being re-targeted.
-  const frozen = scrollingNow;
-  if(!frozen && (t-lastNetworkDraw >= 33 || isDragging)){
-    const delta=priorFrame?Math.min((t-priorFrame)/16.667,3):1;
-    priorFrame=t;lastNetworkDraw=t;
-    if(!isDragging && !networkReducedMotion){
-      orbitAngle+=(.00135+orbitVelocity)*delta;
-      orbitPitch+=pitchVelocity*delta;
-      orbitVelocity*=Math.pow(.935,delta);
-      pitchVelocity*=Math.pow(.91,delta);
-      if(Math.abs(orbitVelocity)<.00002)orbitVelocity=0;
-      if(Math.abs(pitchVelocity)<.00002)pitchVelocity=0;
-    }
-    renderNetwork(t);
-  } else if(frozen){
-    // No speed jump when the user stops scrolling or the entrance finishes.
-    priorFrame=t;
+  const delta=priorFrame?Math.min((t-priorFrame)/16.667,3):1;
+  priorFrame=t;
+  if(!isDragging && !networkReducedMotion){
+    orbitAngle+=orbitVelocity*delta;
+    orbitPitch+=pitchVelocity*delta;
+    orbitVelocity*=Math.pow(.88,delta);
+    pitchVelocity*=Math.pow(.86,delta);
+    if(Math.abs(orbitVelocity)<.00008)orbitVelocity=0;
+    if(Math.abs(pitchVelocity)<.00008)pitchVelocity=0;
   }
-  networkRaf=messageVisible?requestAnimationFrame(animateNetwork):0;
+  if(!scrollingNow && (t-lastNetworkDraw>=32 || isDragging)){
+    renderNetwork(t);lastNetworkDraw=t;
+  }
+  if(messageVisible && !scrollingNow && (isDragging || Math.abs(orbitVelocity)>.00008 || Math.abs(pitchVelocity)>.00008)){
+    networkRaf=requestAnimationFrame(animateNetwork);
+  }else{
+    networkRaf=0;
+  }
 }
-function startNetwork(){if(!networkRaf){priorFrame=0;lastNetworkDraw=0;networkRaf=requestAnimationFrame(animateNetwork);}}
+function startNetwork(){
+  if(!networkRaf && messageVisible && !scrollingNow){
+    priorFrame=0;lastNetworkDraw=0;
+    networkRaf=requestAnimationFrame(animateNetwork);
+  }
+}
 function stopNetwork(){if(networkRaf){cancelAnimationFrame(networkRaf);networkRaf=0;}}
 networkLayout();
 let knownLayoutWidth=stage.clientWidth, knownLayoutHeight=stage.clientHeight;
@@ -2911,6 +2942,8 @@ window.addEventListener('scroll',()=>{
   scrollRestTimer=setTimeout(()=>{
     scrollingNow=false;
     priorFrame=0;
+    // Refresh once after scroll settles; do not resume a perpetual idle loop.
+    if(messageVisible)renderNetwork(performance.now());
   },180);
 },{passive:true});
 // Preserve page scrolling for touchscreens; on mouse/trackpad either axis
@@ -2932,8 +2965,9 @@ stage.addEventListener('pointermove',e=>{
   orbitVelocity=Math.max(-.07,Math.min(.07,turnX*.58));
   pitchVelocity=Math.max(-.07,Math.min(.07,turnY*.58));
   movedDistance+=Math.abs(dx)+Math.abs(dy);lastX=e.clientX;lastY=e.clientY;
-  // The next animation frame renders this angle once, not twice.
-  if(!messageVisible)renderNetwork(performance.now());
+  // Redraw only while a visitor is actively manipulating the network.
+  if(messageVisible && !scrollingNow)startNetwork();
+  else renderNetwork(performance.now());
 });
 function releaseOrbit(e){if(activePointer!==e.pointerId)return;isDragging=false;activePointer=-1;stage.classList.remove('dragging');
   try{if(stage.hasPointerCapture(e.pointerId))stage.releasePointerCapture(e.pointerId)}catch(_){}}
