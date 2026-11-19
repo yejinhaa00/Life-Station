@@ -916,6 +916,13 @@ html,body{max-width:100%;overflow-x:clip}
 .hero.cover-v20-reference .float-cap{opacity:1!important}
 .hero.cover-v20-reference .float-cap img{filter:none!important;opacity:1!important;mix-blend-mode:normal!important}
 
+
+
+/* Fix main hero graduation cap color: replace forced grayscale with the intended light-blue tint. */
+#home #ls-cap img{
+  filter: brightness(0) saturate(100%) invert(76%) sepia(18%) saturate(2606%) hue-rotate(186deg) brightness(101%) contrast(102%) !important;
+}
+
 </style>
 <style>
 /* --- custom refinements requested on 2026-10-30 --- */
